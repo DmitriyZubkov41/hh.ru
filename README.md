@@ -8,7 +8,7 @@
 
 <details> <summary>Код main.py</summary>
 
-```
+```python
 import pandas as pd
 import requests
 from time import sleep
@@ -119,7 +119,8 @@ database.write_db(df)
 
 #Записываем в веб-страницу
 html.write_html(df)
-</details>```
+```
+</details>
 
 Функция get_full_description() нужна чтобы получить полное описание вакансии. 
 
@@ -136,7 +137,7 @@ html.write_html(df)
 **Скрипт skills.ru**
 <details> <summary>Код skills.py</summary>
 
-```
+```python
 import pandas as pd
 import requests
 from time import sleep
@@ -176,7 +177,8 @@ for word in key_skills:
 df = pd.DataFrame(statistik, columns=['Слово', 'Количество', f'Процент из {total}'])
 df = df.sort_values(by='Количество', ascending=False)
 df.to_csv(f'key_words_{date.today().strftime("%d.%m.%Y")}.csv', index=False)
-</details>```
+```
+</details>
 
 Этот скрипт в отличии от файлов database.py и html.py выполняется отдельно от main.py, командой: python3 skills.py (в Linux).
 Нужен для исследования по востребованности знаний для аналитика данных. Знания собрал в список key_skills. В результате выполнения скрипта получаю файл key_words_data.csv . В принципе его достаточно, чтобы сделать определённые выводы. Но решил дополнительно сделать из него дашборд.
