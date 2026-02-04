@@ -1,0 +1,64 @@
+Слово,Количество,Процент из 219
+sql,160,73.1
+python,109,49.8
+excel,107,48.9
+power bi,85,38.8
+метрик,63,28.8
+etl,50,22.8
+mvp,47,21.5
+витрин,40,18.3
+postgresql,39,17.8
+tableau,35,16.0
+статистик,33,15.1
+pandas,32,14.6
+power query,31,14.2
+dwh,31,14.2
+ad-hoc,30,13.7
+ad/hoc,30,13.7
+api,28,12.8
+dax,25,11.4
+jenkins,23,10.5
+clickhouse,23,10.5
+superset,19,8.7
+airflow,16,7.3
+numpy,16,7.3
+power pivot,14,6.4
+git,14,6.4
+datalens,14,6.4
+воронка,11,5.0
+mysql,11,5.0
+a/b-тест,11,5.0
+mathplotlib,9,4.1
+пайплайн,9,4.1
+big data,9,4.1
+oracle,9,4.1
+greenplum,8,3.7
+dbt,8,3.7
+hadoop,7,3.2
+grafana,7,3.2
+docker,7,3.2
+spark,7,3.2
+agile,6,2.7
+data-driven,6,2.7
+c#,5,2.3
+ci/cd,5,2.3
+sklearn,4,1.8
+sqlalchemy,4,1.8
+kafka,4,1.8
+metabase,4,1.8
+eda,3,1.4
+java,3,1.4
+mongodb,3,1.4
+pytorch,3,1.4
+c++,2,0.9
+n8n,2,0.9
+looker studio,2,0.9
+django,1,0.5
+prometheus,1,0.5
+seaborn,1,0.5
+bash,1,0.5
+redis,1,0.5
+rabbitmq,1,0.5
+kubernetes,1,0.5
+terraform,0,0.0
+ansible,0,0.0
