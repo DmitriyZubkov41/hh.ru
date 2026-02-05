@@ -24,7 +24,7 @@ def get_full_description(vacancy_id):
 
 """
 Получить список вакансий по
-за период 3 дней и на удаленную работу 
+за период 1 дней и на удаленную работу 
  1. профессиональные роли: 156, 165, 160 или python или робототехник в названии вакансии , без опыта
  2. профессиональные роли: 156 или робототехник в названии вакансии и с опытом 1-3 года
 """
@@ -32,7 +32,7 @@ url = 'https://api.hh.ru/vacancies'
 lst_experim = ['noExperience', 'between1And3']
 params = {
     'per_page': 100,
-    'period': 3,
+    'period': 1,
     'schedule': 'remote',
     'search_field': 'name'
 }
@@ -103,8 +103,16 @@ df['all_skills'] = df['full_description'].apply(lambda description: [skill for s
 df['all_skills'] = df.apply( lambda row: list(set(row['all_skills'] + [skill.lower() for skill in row['key_skills']])), axis=1 )
 print(df.shape)
 
-#Записываем в postgresql
-database.write_db(df)
+#Преобразуем столбцы с типом list в строки.  Нужно для конкатенации и для записи в базу данных
+df['professional_roles'] = df['professional_roles'].apply(lambda cell: '; '.join([role.get('name', 'нет роли') for role in cell]))
+df['key_skills'] = df['key_skills'].apply(lambda cell: ', '.join(cell) if isinstance(cell, list) else cell)
+df['all_skills'] = df['all_skills'].apply(lambda cell: ', '.join(cell) if isinstance(cell, list) else cell)
+    
+#Преобразуем published_at в тип date
+df['published_at'] = pd.to_datetime(df['published_at'])
 
 #Записываем в веб-страницу
 html.write_html(df)
+
+#Записываем в postgresql
+database.write_db(df)

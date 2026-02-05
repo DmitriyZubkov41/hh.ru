@@ -10,6 +10,7 @@ connection_string = "postgresql://dmitriy:123@localhost:5432/hh"
 engine = create_engine(connection_string)
 
 def write_db(df):
+    '''
     #Преобразуем столбцы с типом list в строки
     df['professional_roles'] = df['professional_roles'].apply(lambda cell: '; '.join([role.get('name', 'нет роли') for role in cell]))
     df['key_skills'] = df['key_skills'].apply(lambda cell: ', '.join(cell) if isinstance(cell, list) else cell)
@@ -17,7 +18,7 @@ def write_db(df):
     
     #Преобразуем published_at в тип date
     df['published_at'] = pd.to_datetime(df['published_at'])
-    
+    '''
 
     # Определяем типы данных для колонок
     dtype_mapping = {

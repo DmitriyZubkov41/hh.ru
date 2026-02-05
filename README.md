@@ -35,7 +35,7 @@ def get_full_description(vacancy_id):
 
 """
 Получить список вакансий по
-за период 3 дней и на удаленную работу 
+за период 1 дней и на удаленную работу 
  1. профессиональные роли: 156, 165, 160 или python или робототехник в названии вакансии , без опыта
  2. профессиональные роли: 156 или робототехник в названии вакансии и с опытом 1-3 года
 """
@@ -43,7 +43,7 @@ url = 'https://api.hh.ru/vacancies'
 lst_experim = ['noExperience', 'between1And3']
 params = {
     'per_page': 100,
-    'period': 3,
+    'period': 1,
     'schedule': 'remote',
     'search_field': 'name'
 }
@@ -114,11 +114,19 @@ df['all_skills'] = df['full_description'].apply(lambda description: [skill for s
 df['all_skills'] = df.apply( lambda row: list(set(row['all_skills'] + [skill.lower() for skill in row['key_skills']])), axis=1 )
 print(df.shape)
 
-#Записываем в postgresql
-database.write_db(df)
+#Преобразуем столбцы с типом list в строки.  Нужно для конкатенации и для записи в базу данных
+df['professional_roles'] = df['professional_roles'].apply(lambda cell: '; '.join([role.get('name', 'нет роли') for role in cell]))
+df['key_skills'] = df['key_skills'].apply(lambda cell: ', '.join(cell) if isinstance(cell, list) else cell)
+df['all_skills'] = df['all_skills'].apply(lambda cell: ', '.join(cell) if isinstance(cell, list) else cell)
+    
+#Преобразуем published_at в тип date
+df['published_at'] = pd.to_datetime(df['published_at'])
 
 #Записываем в веб-страницу
 html.write_html(df)
+
+#Записываем в postgresql
+database.write_db(df)
 ```
 </details>
 
@@ -130,7 +138,11 @@ html.write_html(df)
 
 У меня была идея определить чаще всего встречаемый набор знаний у дата аналитика. Поэтому в датафрейме создал еще один столбец из скиллов, встрещающихся в полном описании ('full_description') и ключевых скиллах ('key_skills'). Чтобы потом через SQL сгруппировать по этому столбцу и вытащить наиболее часто встречаемое значение.
 
-Функция write_db(), разместил её в другой модуль. Из названия понятно, что её назначение записать датафрейм в базу данных.
+Функция write_db(), разместил её в другой модуль. Из названия понятно, что её назначение записать датафрейм в базу данных. Куда записывается, определяется строкой:
+```
+connection_string = "postgresql://dmitriy:123@localhost:5432/hh"
+```
+В ней записывается в бд hh сервера PostgreSQL пользователем dmitriy с паролем '123'. Если захотите выполнить main.py, то вам нужно будет закомментировать строку: database.write_db(df) или в выше приведённой строке свои настройки вписать.
 
 Функция write_html размещена в модуле html. Служит для записи датафрейма в веб-страницу. Сначала я хотел записать в csv  файл, но  его неудобно читать. Потом записывал в xlsx, уже лучше, но подумал, что раз текст описания содержит html теги, то удобнее всего изучать вакансии в веб-формате.
 
@@ -185,9 +197,11 @@ df.to_csv(f'key_words_{date.today().strftime("%d.%m.%Y")}.csv', index=False)
 
 **Создание дашборда**
 
-Файл key_words .csv поместил в базу данных ClickHouse. Дашборд сделал в Superset.
+Файл key_words .csv поместил в базу данных ClickHouse. В Superset на основе этой таблицы создал датасет, чарты и дашборд.
 
 ![Дашборд](статистика-по-ключевым-словам.jpg)
+
+Дополнительно в Excel построил диаграммы, как в дашборде из Superset. Сохранил в файл key_words_05.02.2026.xlsx
 
 
 
