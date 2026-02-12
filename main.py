@@ -4,7 +4,7 @@ from time import sleep
 from datetime import datetime as dt
 
 import database
-import html
+import to_html
 
 
 def get_full_description(vacancy_id):
@@ -97,7 +97,8 @@ for exper in lst_experim:
 df = pd.DataFrame(detailed_vacancies).sort_values(by=['experience', 'published_at'], ascending=[True, False])
 
 # Список ключевых навыков:
-key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
+key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'dag', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'mariadb', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'psycopg2', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlite', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
+
 # Создадим столбец с скиллами из key_skills, присутствующие в столбцах 'full_description' и 'key_skills'
 df['all_skills'] = df['full_description'].apply(lambda description: [skill for skill in key_skills if skill in description.lower()])
 df['all_skills'] = df.apply( lambda row: list(set(row['all_skills'] + [skill.lower() for skill in row['key_skills']])), axis=1 )
@@ -112,7 +113,7 @@ df['all_skills'] = df['all_skills'].apply(lambda cell: ', '.join(cell) if isinst
 df['published_at'] = pd.to_datetime(df['published_at'])
 
 #Записываем в веб-страницу
-html.write_html(df)
+to_html.write_html(df)
 
 #Записываем в postgresql
 database.write_db(df)

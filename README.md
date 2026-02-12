@@ -15,7 +15,7 @@ from time import sleep
 from datetime import datetime as dt
 
 import database
-import html
+import to_html
 
 
 def get_full_description(vacancy_id):
@@ -108,7 +108,8 @@ for exper in lst_experim:
 df = pd.DataFrame(detailed_vacancies).sort_values(by=['experience', 'published_at'], ascending=[True, False])
 
 # Список ключевых навыков:
-key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
+key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'dag', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'mariadb', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'psycopg2', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlite', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
+
 # Создадим столбец с скиллами из key_skills, присутствующие в столбцах 'full_description' и 'key_skills'
 df['all_skills'] = df['full_description'].apply(lambda description: [skill for skill in key_skills if skill in description.lower()])
 df['all_skills'] = df.apply( lambda row: list(set(row['all_skills'] + [skill.lower() for skill in row['key_skills']])), axis=1 )
@@ -123,7 +124,7 @@ df['all_skills'] = df['all_skills'].apply(lambda cell: ', '.join(cell) if isinst
 df['published_at'] = pd.to_datetime(df['published_at'])
 
 #Записываем в веб-страницу
-html.write_html(df)
+to_html.write_html(df)
 
 #Записываем в postgresql
 database.write_db(df)
@@ -138,62 +139,86 @@ database.write_db(df)
 
 У меня была идея определить чаще всего встречаемый набор знаний у дата аналитика. Поэтому в датафрейме создал еще один столбец из скиллов, встрещающихся в полном описании ('full_description') и ключевых скиллах ('key_skills'). Чтобы потом через SQL сгруппировать по этому столбцу и вытащить наиболее часто встречаемое значение.
 
-Функция write_db(), разместил её в другой модуль. Из названия понятно, что её назначение записать датафрейм в базу данных. Куда записывается, определяется строкой:
+Функция write_db(), поместил её в другой модуль database. Из названия понятно, что её назначение записать датафрейм в базу данных. Куда записывается, определяется строкой:
 ```
 connection_string = "postgresql://dmitriy:123@localhost:5432/hh"
 ```
-В ней записывается в бд hh сервера PostgreSQL пользователем dmitriy с паролем '123'. Если захотите выполнить main.py, то вам нужно будет закомментировать строку: database.write_db(df) или в выше приведённой строке свои настройки вписать.
+В ней устанавливаем соединение с базой данных hh пользователем dmitriy с паролем '123'.
 
-Функция write_html размещена в модуле html. Служит для записи датафрейма в веб-страницу. Сначала я хотел записать в csv  файл, но  его неудобно читать. Потом записывал в xlsx, уже лучше, но подумал, что раз текст описания содержит html теги, то удобнее всего изучать вакансии в веб-формате.
+У вас скорее всего таких настроек не будет, то если захотите выполнить main.py, то вам нужно будет или закомментировать строку: database.write_db(df) или в выше приведённой строке свои настройки вписать.
+
+Функция write_html размещена в модуле to_html. Служит для записи датафрейма в веб-страницу. Сначала я хотел записать в csv  файл, но  его неудобно читать. Потом записывал в xlsx, уже лучше, но подумал, что раз текст описания содержит html теги, то удобнее всего изучать вакансии в веб-формате.
 
 **Скрипт skills.ru**
 <details> <summary>Код skills.py</summary>
 
 ```python
-import pandas as pd
 import requests
-from time import sleep
+from bs4 import BeautifulSoup
+import csv
 from datetime import date
+import re
 
+'''
+   Получить сколько вакансий по ключевому слову есть с фильтром 'professional_roles' = 156 и опыт=1-3 года и период = 10
+'''
 
-# Получить сколько вакансий по слову есть с фильтром 'professional_roles' = 156 и опыт=1-3 года
-url = 'https://api.hh.ru/vacancies'
+url = 'https://hh.ru/search/vacancy'
+
+key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'dag', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'mariadb', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'psycopg2', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlite', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
+
 
 params = {
-    'per_page': 100,
     'professional_role': 156,
     'experience': 'between1And3',
-    'period': 10,
-    'search_field': 'description'
+    'search_period': 10,
+    'items_on_page': 100
+}
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 }
 
-
-key_skills = ['a/b-тест', 'ad-hoc', 'ad/hoc', 'agile', 'airflow', 'ansible', 'api', 'bash', 'big data', 'ci/cd', 'clickhouse', 'c++', 'c#', 'data-driven', 'datalens', 'dax', 'dbt', 'django', 'docker', 'dwh', 'eda', 'etl', 'excel', 'git', 'grafana', 'greenplum', 'hadoop', 'java', 'jenkins', 'kafka', 'kubernetes', 'looker studio', 'mathplotlib', 'metabase', 'mongodb', 'mvp', 'mysql', 'n8n', 'numpy', 'oracle', 'pandas', 'postgresql', 'power bi', 'power query', 'power pivot', 'prometheus', 'python', 'pytorch', 'rabbitmq', 'redis', 'seaborn', 'sklearn', 'spark', 'sql', 'sqlalchemy', 'superset', 'tableau', 'terraform', 'витрин', 'воронка', 'пайплайн', 'статистик', 'метрик']
 statistik = []
 total = requests.get('https://api.hh.ru/vacancies?professional_role=156&experience=between1And3&period=10').json()['found']
 
 for word in key_skills:
-    print(word)
-    count = 0
     params['text'] = word
-    for page in range(20):
-        params['page'] = page
-        sleep(0.6)
-        response = requests.get('https://api.hh.ru/vacancies', params=params)
-        if response.status_code != 200 or not response.json()['items']:
-            break
-        data = response.json()
-        count += len(data['items'])
-    statistik.append([word, count, round(count*100/total, 1)])
+    
+    response = requests.get(url, params=params, headers=headers)
 
-df = pd.DataFrame(statistik, columns=['Слово', 'Количество', f'Процент из {total}'])
-df = df.sort_values(by='Количество', ascending=False)
-df.to_csv(f'key_words_{date.today().strftime("%d.%m.%Y")}.csv', index=False)
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+
+    #элемент<h1 data-qa="title" class="magritte-text___gMq2l_7-0-27 magritte-text-overflow___UBrTV_7-0-27 
+    counter = soup.find('h1', {'data-qa': 'title'})
+    print(counter.text)
+    if 'ничего не' in counter.text:
+        statistik.append([word, 0, 0])
+    else:
+        #number = int(''.join(char for char in counter.text if char.isdigit()))
+        match = re.search(r'(\d+)', counter.text)
+        number = int(match.group(1)) if match else 0
+        statistik.append([word, number, round(number*100/total, 1)])
+
+statistik.sort(key=lambda x: x[1], reverse=True)
+
+# Запишем список в csv файл
+filename = f'key_words_{date.today().strftime("%d.%m.%Y")}.csv'
+with open(filename, 'w', newline='', encoding='utf-8-sig') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Слово', 'Количество', f'Процент из {total}'])
+    writer.writerows(statistik)
 ```
 </details>
 
 Этот скрипт в отличии от файлов database.py и html.py выполняется отдельно от main.py, командой: python3 skills.py (в Linux).
-Нужен для исследования по востребованности знаний для аналитика данных. Знания собрал в список key_skills. В результате выполнения скрипта получаю файл key_words_data.csv . В принципе его достаточно, чтобы сделать определённые выводы. Но решил дополнительно сделать из него дашборд.
+Нужен для исследования по востребованности знаний для аналитика данных. 
+
+В первоначальном варианте реализовал скрипт используя API сайта. В итоге получал например для mariadb или sqlite количество вакансий больше 200, когда всего вакансий примерно 270. Явная пурга. Связано это с тем, что когда api не находит вакансии, то в data['found'] подсовывает все похожие вакансии. Был вариант снова использовать full_description, но мне показалось проще парсить страницу поиска, вытаскивать из неё определенный веб-элемент, из этого элемента вытаскивать число найденных вакансий. К счастью не пришлось использовать selenium, не люблю эту библиотеку. 
+
+Ключевые слова собрал в список key_skills. По каждому слову выполняю запрос, получаю в ответ веб-страницу (не json при использовании api). counter - искомый веб-элемент страницы. Вытаскиваю число - количество вакансий. Записываю данные в список statistik. Этот список записываю в файл key_words_ .csv . Всё на мой взгляд очень просто.
+
+В принципе этого файла достаточно, чтобы сделать определённые выводы. Но решил дополнительно сделать из него дашборд.
 
 **Создание дашборда**
 
@@ -201,7 +226,7 @@ df.to_csv(f'key_words_{date.today().strftime("%d.%m.%Y")}.csv', index=False)
 
 ![Дашборд](статистика-по-ключевым-словам.jpg)
 
-Дополнительно в Excel построил диаграммы, как в дашборде из Superset. Сохранил в файл key_words_05.02.2026.xlsx
+Дополнительно в Excel построил диаграммы, как в дашборде из Superset. Сохранил в файл key_words.xlsx
 
 
 

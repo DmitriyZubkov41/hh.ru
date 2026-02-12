@@ -1,0 +1,68 @@
+﻿Слово,Количество,Процент из 277
+sql,197,71.1
+excel,141,50.9
+python,137,49.5
+power bi,110,39.7
+метрик,68,24.5
+tableau,57,20.6
+postgresql,46,16.6
+pandas,43,15.5
+витрин,43,15.5
+etl,42,15.2
+power query,41,14.8
+статистик,41,14.8
+dwh,36,13.0
+api,34,12.3
+ad-hoc,33,11.9
+ad/hoc,33,11.9
+numpy,26,9.4
+airflow,24,8.7
+clickhouse,24,8.7
+git,21,7.6
+superset,21,7.6
+power pivot,20,7.2
+datalens,19,6.9
+dax,19,6.9
+oracle,19,6.9
+greenplum,17,6.1
+mysql,17,6.1
+big data,16,5.8
+воронка,16,5.8
+a/b-тест,13,4.7
+hadoop,12,4.3
+пайплайн,11,4.0
+mathplotlib,10,3.6
+ci/cd,9,3.2
+c#,9,3.2
+docker,9,3.2
+java,7,2.5
+spark,7,2.5
+sqlalchemy,7,2.5
+data-driven,6,2.2
+kafka,6,2.2
+dag,5,1.8
+dbt,5,1.8
+c++,4,1.4
+metabase,4,1.4
+seaborn,4,1.4
+kubernetes,3,1.1
+looker studio,3,1.1
+mongodb,3,1.1
+pytorch,3,1.1
+agile,2,0.7
+grafana,2,0.7
+n8n,2,0.7
+prometheus,2,0.7
+rabbitmq,2,0.7
+redis,2,0.7
+ansible,1,0.4
+bash,1,0.4
+django,1,0.4
+eda,1,0.4
+mvp,1,0.4
+sklearn,1,0.4
+jenkins,0,0
+mariadb,0,0
+psycopg2,0,0
+sqlite,0,0
+terraform,0,0
